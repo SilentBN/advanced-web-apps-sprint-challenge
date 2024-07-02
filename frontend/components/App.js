@@ -1,25 +1,31 @@
-import React, { useState } from 'react'
-import { NavLink, Routes, Route, useNavigate } from 'react-router-dom'
-import Articles from './Articles'
-import LoginForm from './LoginForm'
-import Message from './Message'
-import ArticleForm from './ArticleForm'
-import Spinner from './Spinner'
+import React, { useState } from "react";
+import { NavLink, Routes, Route, useNavigate } from "react-router-dom";
+import Articles from "./Articles";
+import LoginForm from "./LoginForm";
+import Message from "./Message";
+import ArticleForm from "./ArticleForm";
+import Spinner from "./Spinner";
 
-const articlesUrl = 'http://localhost:9000/api/articles'
-const loginUrl = 'http://localhost:9000/api/login'
+const articlesUrl = "http://localhost:9000/api/articles";
+const loginUrl = "http://localhost:9000/api/login";
 
 export default function App() {
   // ✨ MVP can be achieved with these states
-  const [message, setMessage] = useState('')
-  const [articles, setArticles] = useState([])
-  const [currentArticleId, setCurrentArticleId] = useState()
-  const [spinnerOn, setSpinnerOn] = useState(false)
+  const [message, setMessage] = useState("");
+  const [articles, setArticles] = useState([]);
+  const [currentArticleId, setCurrentArticleId] = useState();
+  const [spinnerOn, setSpinnerOn] = useState(false);
 
   // ✨ Research `useNavigate` in React Router v.6
-  const navigate = useNavigate()
-  const redirectToLogin = () => { /* ✨ implement */ }
-  const redirectToArticles = () => { /* ✨ implement */ }
+  const navigate = useNavigate();
+  const redirectToLogin = () => {
+    /* ✨ implement */
+    navigate("/");
+  };
+  const redirectToArticles = () => {
+    /* ✨ implement */
+    navigate("/articles");
+  };
 
   const logout = () => {
     // ✨ implement
@@ -27,7 +33,10 @@ export default function App() {
     // and a message saying "Goodbye!" should be set in its proper state.
     // In any case, we should redirect the browser back to the login screen,
     // using the helper above.
-  }
+    localStorage.removeItem("token");
+    setMessage("Goodbye!");
+    redirectToLogin();
+  };
 
   const login = ({ username, password }) => {
     // ✨ implement
@@ -36,7 +45,26 @@ export default function App() {
     // On success, we should set the token to local storage in a 'token' key,
     // put the server success message in its proper state, and redirect
     // to the Articles screen. Don't forget to turn off the spinner!
-  }
+    setMessage("");
+    setSpinnerOn(true);
+    fetch(loginUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        localStorage.setItem("token", data.token);
+        setMessage(data.message);
+        redirectToArticles();
+      })
+      .catch((err) => {
+        setMessage("Login failed");
+      })
+      .finally(() => {
+        setSpinnerOn(false);
+      });
+  };
 
   const getArticles = () => {
     // ✨ implement
@@ -47,47 +75,75 @@ export default function App() {
     // If something goes wrong, check the status of the response:
     // if it's a 401 the token might have gone bad, and we should redirect to login.
     // Don't forget to turn off the spinner!
-  }
+  };
 
-  const postArticle = article => {
+  const postArticle = (article) => {
     // ✨ implement
     // The flow is very similar to the `getArticles` function.
     // You'll know what to do! Use log statements or breakpoints
     // to inspect the response from the server.
-  }
+  };
 
   const updateArticle = ({ article_id, article }) => {
     // ✨ implement
     // You got this!
-  }
+  };
 
-  const deleteArticle = article_id => {
+  const deleteArticle = (article_id) => {
     // ✨ implement
-  }
+  };
 
   return (
     // ✨ fix the JSX: `Spinner`, `Message`, `LoginForm`, `ArticleForm` and `Articles` expect props ❗
     <>
-      <Spinner />
-      <Message />
-      <button id="logout" onClick={logout}>Logout from app</button>
-      <div id="wrapper" style={{ opacity: spinnerOn ? "0.25" : "1" }}> {/* <-- do not change this line */}
+      <Spinner on={spinnerOn} />
+      <Message message={message} />
+      <button id="logout" onClick={logout}>
+        Logout from app
+      </button>
+      <div id="wrapper" style={{ opacity: spinnerOn ? "0.25" : "1" }}>
+        {" "}
+        {/* <-- do not change this line */}
         <h1>Advanced Web Applications</h1>
         <nav>
-          <NavLink id="loginScreen" to="/">Login</NavLink>
-          <NavLink id="articlesScreen" to="/articles">Articles</NavLink>
+          <NavLink id="loginScreen" to="/">
+            Login
+          </NavLink>
+          <NavLink id="articlesScreen" to="/articles">
+            Articles
+          </NavLink>
         </nav>
         <Routes>
-          <Route path="/" element={<LoginForm />} />
-          <Route path="articles" element={
-            <>
-              <ArticleForm />
-              <Articles />
-            </>
-          } />
+          <Route path="/" element={<LoginForm login={login} />} />
+          <Route
+            path="articles"
+            element={
+              localStorage.getItem("token") ? (
+                <>
+                  <ArticleForm
+                    postArticle={postArticle}
+                    updateArticle={updateArticle}
+                    setCurrentArticleId={setCurrentArticleId}
+                    currentArticle={articles.find(
+                      (a) => a.article_id === currentArticleId
+                    )}
+                  />
+                  <Articles
+                    articles={articles}
+                    getArticles={getArticles}
+                    deleteArticle={deleteArticle}
+                    setCurrentArticleId={setCurrentArticleId}
+                    currentArticleId={currentArticleId}
+                  />
+                </>
+              ) : (
+                <LoginForm login={login} />
+              )
+            }
+          />
         </Routes>
         <footer>Bloom Institute of Technology 2024</footer>
       </div>
     </>
-  )
+  );
 }
