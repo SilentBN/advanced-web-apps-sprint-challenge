@@ -18,6 +18,7 @@ export default function App() {
 
   // ✨ Research `useNavigate` in React Router v.6
   const navigate = useNavigate();
+
   const redirectToLogin = () => {
     /* ✨ implement */
     navigate("/");
@@ -57,6 +58,7 @@ export default function App() {
         localStorage.setItem("token", data.token);
         setMessage(data.message);
         redirectToArticles();
+        getArticles();
       })
       .catch((err) => {
         setMessage("Login failed");
@@ -75,6 +77,34 @@ export default function App() {
     // If something goes wrong, check the status of the response:
     // if it's a 401 the token might have gone bad, and we should redirect to login.
     // Don't forget to turn off the spinner!
+    setMessage("");
+    setSpinnerOn(true);
+    const token = localStorage.getItem("token");
+    fetch(articlesUrl, {
+      method: "GET",
+      headers: {
+        Authorization: token,
+      },
+    })
+      .then((res) => {
+        if (res.status === 401) {
+          throw new Error("Token might have expired");
+        }
+        return res.json();
+      })
+      .then((data) => {
+        setArticles(data.articles);
+        setMessage(data.message);
+      })
+      .catch((err) => {
+        setMessage(err.message);
+        if (err.message === "Token might have expired") {
+          redirectToLogin();
+        }
+      })
+      .finally(() => {
+        setSpinnerOn(false);
+      });
   };
 
   const postArticle = (article) => {
