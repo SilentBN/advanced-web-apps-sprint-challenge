@@ -12,9 +12,9 @@ const limiter = rateLimit({
   max: 100, // limit each IP to 100 requests per windowMs
 });
 
-server.use(limiter);
-
 const server = express();
+
+server.use(limiter);
 server.use(express.json());
 server.use(express.static(path.join(__dirname, "../dist")));
 server.use(cors());
@@ -69,7 +69,7 @@ server.delete("/api/articles/:article_id", async (req, res) => {
   }, delay);
 });
 // SPA
-server.get("*", limiter, (req, res) => {
+server.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "../dist/index.html"));
 });
 // 404
