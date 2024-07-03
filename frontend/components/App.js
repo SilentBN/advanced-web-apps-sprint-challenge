@@ -186,6 +186,34 @@ export default function App() {
 
   const deleteArticle = (article_id) => {
     // ✨ implement
+    setMessage("");
+    setSpinnerOn(true);
+    const token = localStorage.getItem("token");
+    fetch(`${articlesUrl}/${article_id}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: token,
+      },
+    })
+      .then((res) => {
+        if (res.status === 401) {
+          throw new Error("Token might have expired");
+        }
+        return res.json();
+      })
+      .then((data) => {
+        setArticles(articles.filter((art) => art.article_id !== article_id));
+        setMessage(data.message);
+      })
+      .catch((err) => {
+        setMessage(err.message);
+        if (err.message === "Token might have expired") {
+          redirectToLogin();
+        }
+      })
+      .finally(() => {
+        setSpinnerOn(false);
+      });
   };
 
   return (
