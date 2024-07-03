@@ -147,6 +147,41 @@ export default function App() {
   const updateArticle = ({ article_id, article }) => {
     // ✨ implement
     // You got this!
+    setMessage("");
+    setSpinnerOn(true);
+    const token = localStorage.getItem("token");
+    fetch(`${articlesUrl}/${article_id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: token,
+      },
+      body: JSON.stringify(article),
+    })
+      .then((res) => {
+        if (res.status === 401) {
+          throw new Error("Token might have expired");
+        }
+        return res.json();
+      })
+      .then((data) => {
+        setArticles(
+          articles.map((art) =>
+            art.article_id === article_id ? data.article : art
+          )
+        );
+        setMessage(data.message);
+        setCurrentArticleId(null);
+      })
+      .catch((err) => {
+        setMessage(err.message);
+        if (err.message === "Token might have expired") {
+          redirectToLogin();
+        }
+      })
+      .finally(() => {
+        setSpinnerOn(false);
+      });
   };
 
   const deleteArticle = (article_id) => {
