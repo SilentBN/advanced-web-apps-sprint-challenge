@@ -112,6 +112,36 @@ export default function App() {
     // The flow is very similar to the `getArticles` function.
     // You'll know what to do! Use log statements or breakpoints
     // to inspect the response from the server.
+    setMessage("");
+    setSpinnerOn(true);
+    const token = localStorage.getItem("token");
+    fetch(articlesUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: token,
+      },
+      body: JSON.stringify(article),
+    })
+      .then((res) => {
+        if (res.status === 401) {
+          throw new Error("Token might have expired");
+        }
+        return res.json();
+      })
+      .then((data) => {
+        setArticles([...articles, data.article]);
+        setMessage(data.message);
+      })
+      .catch((err) => {
+        setMessage(err.message);
+        if (err.message === "Token might have expired") {
+          redirectToLogin();
+        }
+      })
+      .finally(() => {
+        setSpinnerOn(false);
+      });
   };
 
   const updateArticle = ({ article_id, article }) => {
